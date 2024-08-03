@@ -1,6 +1,5 @@
 package com.memije.tareasapp.addtasks.ui
 
-import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -30,7 +29,15 @@ class TasksViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onCheckBoxSelected(taskModel: TaskModel) {
+        val index = _taskList.indexOf(taskModel)
+        _taskList[index] = _taskList[index].let { task ->
+            task.copy(selected = !task.selected)
+        }
+    }
 
+    fun onItemRemove(taskModel: TaskModel) {
+       val task = _taskList.find { it.id == taskModel.id }
+        _taskList.remove(task)
     }
 
 }
