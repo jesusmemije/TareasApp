@@ -4,10 +4,26 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.memije.tareasapp.addtasks.domain.AddTaskUseCase
+import com.memije.tareasapp.addtasks.domain.GetTasksUseCase
+import com.memije.tareasapp.addtasks.ui.TaskUiState.*
 import com.memije.tareasapp.addtasks.ui.model.TaskModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class TasksViewModel @Inject constructor() : ViewModel() {
+class TasksViewModel @Inject constructor(
+    private val addTaskUseCase: AddTaskUseCase, getTasksUseCase: GetTasksUseCase
+) : ViewModel() {
+
+    val uiState: StateFlow<TaskUiState> = getTasksUseCase().map(::Success)
+        .catch { Error(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
     private val _showDialog = MutableLiveData<Boolean>()
     val showDialog: LiveData<Boolean> = _showDialog
@@ -22,6 +38,10 @@ class TasksViewModel @Inject constructor() : ViewModel() {
     fun onTaskCreated(task: String) {
         _showDialog.value = false
         _taskList.add(TaskModel(task = task))
+
+        viewModelScope.launch {
+            addTaskUseCase(TaskModel(task = task))
+        }
     }
 
     fun onShowDialogClick() {
@@ -36,7 +56,7 @@ class TasksViewModel @Inject constructor() : ViewModel() {
     }
 
     fun onItemRemove(taskModel: TaskModel) {
-       val task = _taskList.find { it.id == taskModel.id }
+        val task = _taskList.find { it.id == taskModel.id }
         _taskList.remove(task)
     }
 
