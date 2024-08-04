@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.memije.tareasapp.addtasks.domain.AddTaskUseCase
 import com.memije.tareasapp.addtasks.domain.GetTasksUseCase
+import com.memije.tareasapp.addtasks.domain.UpdateTaskUseCase
 import com.memije.tareasapp.addtasks.ui.TaskUiState.Error
 import com.memije.tareasapp.addtasks.ui.TaskUiState.Loading
 import com.memije.tareasapp.addtasks.ui.TaskUiState.Success
@@ -21,7 +22,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class TasksViewModel @Inject constructor(
-    private val addTaskUseCase: AddTaskUseCase, getTasksUseCase: GetTasksUseCase
+    private val addTaskUseCase: AddTaskUseCase,
+    private val updateTaskUseCase: UpdateTaskUseCase,
+    getTasksUseCase: GetTasksUseCase
 ) : ViewModel() {
 
     val uiState: StateFlow<TaskUiState> = getTasksUseCase().map(::Success)
@@ -50,10 +53,9 @@ class TasksViewModel @Inject constructor(
     }
 
     fun onCheckBoxSelected(taskModel: TaskModel) {
-        /* val index = _taskList.indexOf(taskModel)
-        _taskList[index] = _taskList[index].let { task ->
-            task.copy(selected = !task.selected)
-        } */
+        viewModelScope.launch {
+            updateTaskUseCase(taskModel.copy(selected = !taskModel.selected))
+        }
     }
 
     fun onItemRemove(taskModel: TaskModel) {
